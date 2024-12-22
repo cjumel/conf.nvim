@@ -22,6 +22,9 @@ function M.setup(opts)
     nvim_config[k] = v
   end
 
+  vim.api.nvim_create_user_command("ConfViewConfig", function()
+    vim.notify(vim.inspect(nvim_config), vim.log.levels.INFO, { title = "conf.nvim" })
+  end, { desc = "View the configuration" })
   vim.api.nvim_create_user_command("ConfOpenDefault", function()
     vim.cmd("edit " .. discovery.default_config_path)
   end, { desc = "Open the default configuration file" })
