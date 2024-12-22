@@ -1,9 +1,14 @@
 local default_config = {
-  -- The name of the project-level configuration file
+  -- The path were to look for the default Neovim configuration inside the Neovim configuration
+  -- directory
+  default_config_path = "lua/conf-default.lua",
+  -- The path were to look for the global Neovim configuration inside the Neovim configuration
+  -- directory
+  global_config_path = "lua/conf-global.lua",
+  -- The name to look for the project-level configuration file, from the current working directory
+  -- upward until the home directory
   project_config_name = ".nvim.lua",
-  -- The name of the global configuration file
-  global_config_name = ".nvim-global.lua",
-  -- The prefix for environment variables to discover as Neovim configuration
+  -- The prefix for environment variables to consider as Neovim configuration
   env_var_prefix = "NVIM_",
   -- The default Neovim configuration
   default_nvim_config = {},

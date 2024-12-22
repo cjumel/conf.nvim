@@ -12,18 +12,21 @@ that I wanted to be able to define simple configuration options at various level
 - the project level, e.g. if I work on a project that uses a different code formatter, I want to
   disable my formatter or change it
 - the command level, e.g. to start Neovim in "light mode" (basically without any external
-  dependenncies) on-the-flye, without having to create a new configuration file
+  dependenncies) on-the-fly, without having to create a new configuration file
 
 Besides, I wanted to do this with Lua, as I like this language and it is powerful-enough and yet
 very efficient!
 
 ## The solution
 
-When the plugin is initialized, the user defines a default Neovim configuration, then three steps
-happen, corresponding to the 3 levels described above:
+When the plugin is setup,the following steps happen:
 
-- First, the plugin looks for a global Neovim configuration file (named `.nvim-global.lua` by
-  default) in the Neovim configuration directory (by default `~/.config/nvim`). If found, this file
+- First, the plugin looks for a default Neovim configuration file (in `lua/default-nvim-config.lua`
+  by default) in the Neovim configuration directory (`~/.config/nvim` by default). If found, this
+  file is **securely** sourced, and its output is used to define the Neovim configuration.
+
+- Then, the plugin looks for a global Neovim configuration file (in `lua/global-nvim-config.lua` by
+  default) in the Neovim configuration directory (`~/.config/nvim` by default). If found, this file
   is **securely** sourced, and its output is used to update the Neovim configuration.
 
 - Then, the plugin looks for a project-specific Neovim configuration file (named `.nvim.lua` by
@@ -64,11 +67,16 @@ To install the plugin, you can use your favorite plugin manager, for example
 
 ```lua
  {
-  -- The name of the project-level configuration file
+  -- The path were to look for the default Neovim configuration inside the Neovim configuration
+  -- directory
+  default_config_path = "lua/conf-default.lua",
+  -- The path were to look for the global Neovim configuration inside the Neovim configuration
+  -- directory
+  global_config_path = "lua/conf-global.lua",
+  -- The name to look for the project-level configuration file, from the current working directory
+  -- upward until the home directory
   project_config_name = ".nvim.lua",
-  -- The name of the global configuration file
-  global_config_name = ".nvim-global.lua",
-  -- The prefix for environment variables to discover as Neovim configuration
+  -- The prefix for environment variables to consider as Neovim configuration
   env_var_prefix = "NVIM_",
   -- The default Neovim configuration
   default_nvim_config = {},
@@ -81,3 +89,11 @@ Then, in your configuration of Neovim, you can use the `conf.nvim` Neovim config
 simply with `require("conf").get(...)` (e.g. `light_mode=require("conf").get("light_mode")`, and the
 configuration value will be automatically udpated with any of the `conf.nvim` configuration file or
 environment variables you use.
+
+## Known issue
+
+When using `require("conf").get` inside `lazy.nvim` plugin specification field like `cond` (which is
+one of its main usecases for me), `lazy.nvim` hasn't setup the plugin yet, so the setup is called
+manually by the plugin function. For this reason, if one wants to use other options than the default
+config, one needs to pass them to `get` at this moment (which is quite cumbersome). Hence, to
+benefit from this usecase, I recommand sticking to the default configuration.

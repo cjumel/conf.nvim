@@ -1,9 +1,17 @@
 local M = {}
 
+local function discover_default_nvim_config()
+  local config = require("conf.config")
+  local nvim_config_path = vim.fn.stdpath("config") .. "/" .. config.default_config_path
+  local nvim_config_code = vim.secure.read(nvim_config_path)
+  if nvim_config_code ~= nil then -- Configuration file is found and trusted
+    return load(nvim_config_code)()
+  end
+end
+
 local function discover_global_nvim_config()
   local config = require("conf.config")
-  -- Look for the global Neovim configuration file in the Neovim configuration directory
-  local nvim_config_path = vim.fn.stdpath("config") .. "/" .. config.global_config_name
+  local nvim_config_path = vim.fn.stdpath("config") .. "/" .. config.global_config_path
   local nvim_config_code = vim.secure.read(nvim_config_path)
   if nvim_config_code ~= nil then -- Configuration file is found and trusted
     return load(nvim_config_code)()
@@ -45,8 +53,7 @@ local function discover_env_nvim_config()
 end
 
 function M.discover_nvim_config()
-  local config = require("conf.config")
-  local nvim_config = vim.deepcopy(config.default_nvim_config)
+  local nvim_config = discover_default_nvim_config() or {}
   nvim_config = vim.tbl_extend("force", nvim_config, discover_global_nvim_config() or {})
   nvim_config = vim.tbl_extend("force", nvim_config, discover_project_nvim_config() or {})
   nvim_config = vim.tbl_extend("force", nvim_config, discover_env_nvim_config() or {})
