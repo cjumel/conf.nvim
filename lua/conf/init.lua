@@ -22,6 +22,16 @@ function M.setup(opts)
     nvim_config[k] = v
   end
 
+  vim.api.nvim_create_user_command("ConfOpenDefault", function()
+    vim.cmd("edit " .. discovery.default_config_path)
+  end, { desc = "Open the default configuration file" })
+  vim.api.nvim_create_user_command("ConfOpenGlobal", function()
+    vim.cmd("edit " .. discovery.global_config_path)
+  end, { desc = "Open the global configuration file" })
+  vim.api.nvim_create_user_command("ConfOpenProject", function()
+    vim.cmd("edit " .. discovery.project_config_path)
+  end, { desc = "Open the project configuration file" })
+
   is_setup = true
 end
 

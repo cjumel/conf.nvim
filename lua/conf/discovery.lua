@@ -1,34 +1,46 @@
 local M = {}
 
-local function discover_default_nvim_config()
+local function get_default_config_path()
   local config = require("conf.config")
-  local nvim_config_path = vim.fn.stdpath("config") .. "/" .. config.default_config_path
-  local nvim_config_code = vim.secure.read(nvim_config_path)
+  return vim.fn.stdpath("config") .. "/" .. config.default_config_path
+end
+M.default_config_path = get_default_config_path()
+
+local function discover_default_nvim_config()
+  local nvim_config_code = vim.secure.read(M.default_config_path)
   if nvim_config_code ~= nil then -- Configuration file is found and trusted
     return load(nvim_config_code)()
   end
 end
+
+local function get_global_config_path()
+  local config = require("conf.config")
+  return vim.fn.stdpath("config") .. "/" .. config.global_config_path
+end
+M.global_config_path = get_global_config_path()
 
 local function discover_global_nvim_config()
-  local config = require("conf.config")
-  local nvim_config_path = vim.fn.stdpath("config") .. "/" .. config.global_config_path
-  local nvim_config_code = vim.secure.read(nvim_config_path)
+  local nvim_config_code = vim.secure.read(M.global_config_path)
   if nvim_config_code ~= nil then -- Configuration file is found and trusted
     return load(nvim_config_code)()
   end
 end
 
-local function discover_project_nvim_config()
+local function get_project_config_path()
   local config = require("conf.config")
   -- Look for the project configuration file from the current working directory upward until the
   -- home directory
-  local nvim_config_path =
+  local project_config_path =
     vim.fn.findfile(config.project_config_name, vim.fn.getcwd() .. ";" .. vim.env.HOME)
-  if nvim_config_path ~= "" then -- Configuration file is found
-    local nvim_config_code = vim.secure.read(nvim_config_path)
-    if nvim_config_code ~= nil then -- Configuration file is trusted
-      return load(nvim_config_code)()
-    end
+  -- Default to a configuration file in the cwd
+  return project_config_path or vim.fn.getcwd() .. "/" .. config.project_config_name
+end
+M.project_config_path = get_project_config_path()
+
+local function discover_project_nvim_config()
+  local nvim_config_code = vim.secure.read(M.project_config_path)
+  if nvim_config_code ~= nil then -- Configuration file is trusted
+    return load(nvim_config_code)()
   end
 end
 
