@@ -2,7 +2,9 @@
 
 Simple machine-, project- and command-level configuration for Neovim in Lua.
 
-## The problem
+## Concepts
+
+### The problem
 
 This plugin tries to fix **as simply as possible** an issue I had with configuring Neovim, which is
 that I wanted to be able to define simple configuration options at various levels:
@@ -15,35 +17,38 @@ that I wanted to be able to define simple configuration options at various level
   dependenncies) on-the-fly, without having to create a new configuration file
 
 Besides, I wanted to do this with Lua, as I like this language and it is powerful-enough and yet
-very efficient!
+very efficient, and I wanted each level to update the previous ones, not overwrite them.
 
-## The solution
+### The solution
 
-When the plugin is setup,the following steps happen:
+When the plugin is setup, the following steps happen:
 
-- First, the plugin looks for a default Neovim configuration file (in `lua/default-nvim-config.lua`
-  by default) in the Neovim configuration directory (`~/.config/nvim` by default). If found, this
-  file is **securely** sourced, and its output is used to define the Neovim configuration.
+- First, the plugin looks for a default Neovim configuration file in `lua/conf/default.lua` in the
+  Neovim configuration directory (`~/.config/nvim` by default). If found, its output is used to
+  define the Neovim configuration.
 
-- Then, the plugin looks for a global Neovim configuration file (in `lua/global-nvim-config.lua` by
-  default) in the Neovim configuration directory (`~/.config/nvim` by default). If found, this file
-  is **securely** sourced, and its output is used to update the Neovim configuration.
+- Then, the plugin looks for a global Neovim configuration file in `lua/conf/global.lua` in the
+  Neovim configuration directory (`~/.config/nvim` by default). If found, its output is used to
+  update the Neovim configuration.
 
-- Then, the plugin looks for a project-specific Neovim configuration file (named `.nvim.lua` by
-  default) in the current working directory and all its parent directories until the home directory.
-  If found, this file, again, is **securely** sourced, and its output is used to update the Neovim
-  configuration.
+- Then, the plugin looks for a project-specific Neovim configuration file named `.nvim.lua` in the
+  current working directory and all its parent directories until the home directory. If found, the
+  file is sourced **securely** using `vim.secure.read`, to avoid executing blindly potentially
+  malicious code. Again, its output is used to update the Neovim configuration.
 
-- Finally, the plugin looks for environment variables starting with a prefix (`NVIM_` by default),
-  and if found, it adds them with their values to the Neovim configuration.
+- Finally, the plugin looks for environment variables starting with the `NVIM_` prefix. If found, it
+  adds them with their values to the Neovim configuration.
 
-This system is simple but flexible-enough for me to configure Neovim in a way that suits my needs.
-Besides, since it relies on sourcing Lua files, it supports executing arbitrary Lua code, like
-creating commands or setting environment variables at machine- or project-level.
+This system is quite simple but flexible-enough for me to configure Neovim in a way that suits my
+needs. Besides, since it relies on sourcing Lua files, it supports executing arbitrary Lua code,
+like creating commands or setting environment variables at machine- or project-level.
 
-Usually, I Git-ignore the global and project-specific configuration files, and only my default
-Neovim configuration is versioned, so that the Neovim configuration doesn't pollute any project I'm
-working on.
+> [!TIP]
+>
+> Usually, I Git-ignore the global configuration file in my Neovim configuration repository, and I
+> Git-ignore the project-specific configuration files at the global Git level, by adding it in
+> `~/.config/git/ignore`, so only my default Neovim configuration file is versioned. That way the
+> Neovim configuration files don't pollute any project I'm working on.
 
 ## Installation
 
@@ -53,47 +58,49 @@ To install the plugin, you can use your favorite plugin manager, for example
 ```lua
 {
   "cjumel/conf.nvim",
-  lazy = true,
-  opts = {
-  default_nvim_config = {
-      ...  -- Your custom configuration goes here, e.g. `light_mode = false`
-    },
-  }
+  lazy = true, -- Can be directly required by other plugins
 }
 ```
 
-<details>
-<summary>Default configuration</summary>
+> [!NOTE]
+>
+> This plugin is designed to be usable even before plugin managers like `lazy.nvim` has set it up,
+> to be usable for instance in plugin specificiations, like `cond` in `lazy.nvim`. For this reason,
+> using the plugin functions will automatically set it up, and the plugin doesn't support options,
+> has it would be cumbersome to deal with them in this context.
+
+## Usage
+
+To use this plugin, first install it as described above, then create a `lua/conf/default.lua` file
+where you can define your default configuration options. This can be any arbitrary option, for
+instance `disable_copilot=false` to enable or disable the Copilot-related plugins.
+
+Then, you can use in your Neovim configuration files `require("conf").get` to get the value of a
+configuration option. This value will have been updated by any global-, project- or command-level
+option as described above. For instance, in our previous example, you could add use in the plugin
+specification of Copilot-related plugins, like
+[copilot.lua](https://github.com/zbirenbaum/copilot.lua) or
+[CopilotChat.nvim](https://github.com/CopilotC-Nvim/CopilotChat.nvim):
 
 ```lua
- {
-  -- The path were to look for the default Neovim configuration inside the Neovim configuration
-  -- directory
-  default_config_path = "lua/conf-default.lua",
-  -- The path were to look for the global Neovim configuration inside the Neovim configuration
-  -- directory
-  global_config_path = "lua/conf-global.lua",
-  -- The name to look for the project-level configuration file, from the current working directory
-  -- upward until the home directory
-  project_config_name = ".nvim.lua",
-  -- The prefix for environment variables to consider as Neovim configuration
-  env_var_prefix = "NVIM_",
-  -- The default Neovim configuration
-  default_nvim_config = {},
+{
+  "zbirenbaum/copilot.lua",
+  cond=require("conf").get("disable_copilot"),
+  ...
 }
 ```
 
-</details>
+Then, you can enable or disable the Copilot-related plugins at the machine-level, by editing the
+`lua/conf/default.lua` file in the Neovim configuration directory, at the project-level, by creating
+a `.nvim.lua` file in the project directory, or at the command-level, by setting the
+`NVIM_DISABLE_COPILOT` environment variable.
 
-Then, in your configuration of Neovim, you can use the `conf.nvim` Neovim configuration options
-simply with `require("conf").get(...)` (e.g. `light_mode=require("conf").get("light_mode")`, and the
-configuration value will be automatically udpated with any of the `conf.nvim` configuration file or
-environment variables you use.
+## Similar plugins
 
-## Known issue
-
-When using `require("conf").get` inside `lazy.nvim` plugin specification field like `cond` (which is
-one of its main usecases for me), `lazy.nvim` hasn't setup the plugin yet, so the setup is called
-manually by the plugin function. For this reason, if one wants to use other options than the default
-config, one needs to pass them to `get` at this moment (which is quite cumbersome). Hence, to
-benefit from this usecase, I recommand sticking to the default configuration.
+- [neoconf.nvim](https://github.com/folke/neoconf.nvim), a more ambitious alternatives but which
+  didn't suit my needs, as it is configured via JSON files and tries to be a lot more, with LSP
+  integrations, etc.
+- [nvim-config-local](https://github.com/klen/nvim-config-local/tree/main), a very cool alternative
+  with quite similar features, except that is supports only project-level style configuration, not
+  configurations cascading on several levels.
+- [direnv.nvim](https://github.com/direnv/direnv.vim), a vimscript alternative
