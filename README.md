@@ -23,11 +23,11 @@ very efficient, and I wanted each level to update the previous ones, not overwri
 
 When `conf.nvim` is used, the following happens:
 
-- First, `conf.nvim` looks for a default Neovim configuration file in `lua/conf/default.lua` in the
+- First, `conf.nvim` looks for a default Neovim configuration file in `.nvim-default.lua` in the
   Neovim configuration directory (`~/.config/nvim` by default).
 
 - Then, `conf.nvim` looks for a global, machine-level Neovim configuration file in
-  `lua/conf/global.lua` in the Neovim configuration directory (`~/.config/nvim` by default).
+  `.nvim-global.lua` in the Neovim configuration directory (`~/.config/nvim` by default).
 
 - Then, `conf.nvim` looks for a project-specific Neovim configuration file named `.nvim.lua` in the
   current working directory and all its parent directories until the home directory. If found, the
@@ -72,9 +72,9 @@ To install `conf.nvim`, you can use your favorite plugin manager, for example
 
 ## Usage
 
-To use `conf.nvim`, first install it as described above, then create a `lua/conf/default.lua` file
-in your Neovim configuration directory where you return your default configuration option table.
-This can be any arbitrary option, for instance `disable_copilot=false` to enable or disable the
+To use `conf.nvim`, first install it as described above, then create a `.nvim-default.lua` file in
+your Neovim configuration directory where you return your default configuration option table. This
+can be any arbitrary option, for instance `disable_copilot=false` to enable or disable the
 Copilot-related plugins.
 
 Then, you can use `conf.nvim` in your Neovim configuration files to access your custom configuration
@@ -90,8 +90,8 @@ table with `require("conf")`. For instance, to easily disable
 ```
 
 Then, you can enable or disable `copilot.lua` at the machine-level, by editing the
-`lua/conf/global.lua` file in the Neovim configuration directory, at the project-level, by creating
-a `.nvim.lua` file in the project directory, or at the command-level, by setting the
+`.nvim-global.lua` file in the Neovim configuration directory, at the project-level, by creating a
+`.nvim.lua` file in the project directory, or at the command-level, by setting the
 `NVIM_DISABLE_COPILOT` environment variable.
 
 ## Similar plugins
