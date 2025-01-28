@@ -23,18 +23,19 @@ very efficient, and I wanted each level to update the previous ones, not overwri
 
 When `conf.nvim` is used, the following happens:
 
-- First, `conf.nvim` looks for a default Neovim configuration file in `.nvim-default.lua` in the
-  Neovim configuration directory (`~/.config/nvim` by default).
+- First, `conf.nvim` looks for a default Neovim configuration table returned by a file
+  `.nvim-default.lua` in the Neovim configuration directory (`~/.config/nvim` by default).
 
-- Then, `conf.nvim` looks for a global, machine-level Neovim configuration file in
+- Then, `conf.nvim` looks for a global, machine-level Neovim configuration table returned by a file
   `.nvim-global.lua` in the Neovim configuration directory (`~/.config/nvim` by default).
 
-- Then, `conf.nvim` looks for a project-specific Neovim configuration file named `.nvim.lua` in the
-  current working directory and all its parent directories until the home directory. If found, the
-  file is sourced **securely** using `vim.secure.read`, to avoid executing blindly potentially
-  malicious code.
+- Then, `conf.nvim` looks for a project-specific Neovim configuration table return by a file named
+  `.nvim.lua` in the current working directory and all its parent directories until the home
+  directory. If found, the file is sourced **securely** using `vim.secure.read`, to avoid executing
+  blindly potentially malicious code.
 
-- Finally, `conf.nvim` looks for environment variables starting with the `NVIM_` prefix.
+- Finally, `conf.nvim` looks for environment variables starting with the `NVIM_` prefix to define a
+  command-level Neovim configuration table.
 
 At each of these steps, the newly found configuration options are used to update the existing
 configuration table, overriding any shared configuration values, to define the final configuration
@@ -53,7 +54,7 @@ like creating commands or setting environment variables at machine- or project-l
 
 ## Installation
 
-To install `conf.nvim`, you can use your favorite plugin manager, for example
+To install `conf.nvim`, you can use your favorite plugin manager, for example I use
 [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
@@ -63,18 +64,32 @@ To install `conf.nvim`, you can use your favorite plugin manager, for example
 }
 ```
 
-> [!NOTE]
+Since `conf.nvim` is designed to be usable in other plugins' specifications (typically the `cond`
+field in a `lazy.vim` plugin specifications), it doesn't rely on the call of a `setup` function
+(which would not have been called anyway at this stage).
+
+> [!WARNING]
 >
-> This plugin is designed to be usable even before plugin managers like `lazy.nvim` has actually set
-> plugins up, to be usable for instance in plugin specificiations, like the `cond` field in a
-> `lazy.nvim` plugin specification. For this reason, `conf.nvim` doesn't need to call a `setup`
-> method.
+> If you're using `conf.nvim` in other plugins specifications and you're grouping plugins by
+> directories when declaring them to `lazy.nvim`, make sure `conf.nvim` is in the first plugin
+> group, otherwise, `lazy.nvim` might not be able to find it when calling `require("conf")`. For
+> instance, this could be something like:
+>
+> ```lua
+> require("lazy").setup({
+>   spec = {
+>    { import = "plugins.core" }, -- Put conf.nvim in there
+>    { import = "plugins.ui" },
+>    ...
+>   }
+> })
+> ```
 
 ## Usage
 
 To use `conf.nvim`, first install it as described above, then create a `.nvim-default.lua` file in
-your Neovim configuration directory where you return your default configuration option table. This
-can be any arbitrary option, for instance `disable_copilot=false` to enable or disable the
+your Neovim configuration directory where you return your default Neovim configuration table. It can
+contain any arbitrary option, for instance `disable_copilot=false` to enable or disable the
 Copilot-related plugins.
 
 Then, you can use `conf.nvim` in your Neovim configuration files to access your custom configuration
@@ -89,17 +104,17 @@ table with `require("conf")`. For instance, to easily disable
 }
 ```
 
-Then, you can enable or disable `copilot.lua` at the machine-level, by editing the
+Finally, you can enable or disable `copilot.lua` at the machine-level, by editing the
 `.nvim-global.lua` file in the Neovim configuration directory, at the project-level, by creating a
 `.nvim.lua` file in the project directory, or at the command-level, by setting the
 `NVIM_DISABLE_COPILOT` environment variable.
 
 ## Similar plugins
 
-- [neoconf.nvim](https://github.com/folke/neoconf.nvim), a more ambitious alternatives but which
-  didn't suit my needs, as it is configured via JSON files and tries to be a lot more, with LSP
+- [neoconf.nvim](https://github.com/folke/neoconf.nvim), a more ambitious alternatives which didn't
+  suit my needs, as it is configured via JSON files and tries to be a lot more, with LSP
   integrations, etc.
 - [nvim-config-local](https://github.com/klen/nvim-config-local/tree/main), a very cool alternative
   with quite similar features, except that is supports only project-level style configuration, not
   configurations cascading on several levels.
-- [direnv.nvim](https://github.com/direnv/direnv.vim), a vimscript alternative
+- [direnv.nvim](https://github.com/direnv/direnv.vim), an older vimscript alternative
